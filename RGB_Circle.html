@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RGB</title>
+    <style>
+        svg {
+            border: 1px solid black;
+            display: block; /* SVG 요소가 인라인 레이아웃이 아닌 블록 레이아웃을 가지도록 설정합니다. */
+        }
+        .rgb-text {
+            font-family: Arial, sans-serif;
+            font-size: 50px; /* 텍스트의 크기를 20px로 증가시킵니다. */
+            dominant-baseline: middle;
+            text-anchor: middle;
+            pointer-events: none;
+        }
+
+    </style>
+</head>
+<body>
+    <svg id="svgContainer">
+        <circle class="circle" cx="500" cy="500" r="240" stroke="black" stroke-width="2" fill="rgb(0, 255, 0)"/>
+        <circle class="circle" cx="500" cy="500" r="240" stroke="black" stroke-width="2" fill="rgb(0, 0, 255)"/>
+        <circle class="circle" cx="500" cy="500" r="240" stroke="black" stroke-width="2" fill="rgb(255, 0, 0)"/>
+    </svg>
+
+    <script>
+        var svg = document.getElementById('svgContainer');
+        var circles = document.querySelectorAll('.circle');
+        var numCircles = circles.length;
+        var dxArray = []; // x축 이동 속도 배열
+        var dyArray = []; // y축 이동 속도 배열
+        var originalColors = []; // 각 원의 원래 색상을 저장하는 배열
+
+        // SVG 요소의 너비와 높이를 화면의 너비와 높이에 맞게 설정
+        svg.setAttribute('width', window.innerWidth);
+        svg.setAttribute('height', window.innerHeight);
+
+        // 원의 초기 위치 설정 및 이동 속도 설정
+        for (var i = 0; i < numCircles; i++) {
+            var circle = circles[i];
+            var x = Math.random() * (parseFloat(svg.getAttribute('width')) - parseFloat(circle.getAttribute('r') * 2)) + parseFloat(circle.getAttribute('r'));
+            var y = Math.random() * (parseFloat(svg.getAttribute('height')) - parseFloat(circle.getAttribute('r') * 2)) + parseFloat(circle.getAttribute('r'));
+            var dx = (Math.random() - 0.5) * 9; // -2에서 2 사이의 랜덤한 값
+            var dy = (Math.random() - 0.5) * 9; // -2에서 2 사이의 랜덤한 값
+
+            circle.setAttribute('cx', x);
+            circle.setAttribute('cy', y);
+
+            // 원별로 이동 속도 배열에 추가
+            dxArray.push(dx);
+            dyArray.push(dy);
+
+            // 각 원의 원래 색상을 저장
+            originalColors.push(circle.getAttribute('fill'));
+
+            // RGB값을 나타내는 텍스트 엘리먼트 생성
+            var text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            text.setAttribute('class', 'rgb-text');
+            text.setAttribute('x', x);
+            text.setAttribute('y', y + parseFloat(circle.getAttribute('r')) + 15);
+            text.textContent = circle.getAttribute('fill');
+            svg.appendChild(text);
+        }
+
+        function moveCircles() {
+            for (var i = 0; i < numCircles; i++) {
+                var circle = circles[i];
+                var x = parseFloat(circle.getAttribute('cx'));
+                var y = parseFloat(circle.getAttribute('cy'));
+                var radius = parseFloat(circle.getAttribute('r'));
+
+                // 원의 위치를 갱신합니다.
+                x += dxArray[i];
+                y += dyArray[i];
+
+                // 원이 SVG 요소의 테두리에 닿으면 튕깁니다.
+                if (x - radius <= 0 || x + radius >= parseFloat(svg.getAttribute('width'))) {
+                    dxArray[i] *= -1;
+                }
+                if (y - radius <= 0 || y + radius >= parseFloat(svg.getAttribute('height'))) {
+                    dyArray[i] *= -1;
+                }
+
+                // 새로운 위치를 설정합니다.
+                circle.setAttribute('cx', x);
+                circle.setAttribute('cy', y);
+
+                // RGB값을 나타내는 텍스트의 위치를 업데이트합니다.
+                var text = svg.querySelectorAll('.rgb-text')[i];
+                text.setAttribute('x', x);
+                text.setAttribute('y', y);
+            }
+
+            // 서로 겹치는 원들의 색상을 혼합합니다.
+            mixColors();
+
+            // 다음 프레임을 요청합니다.
+            requestAnimationFrame(moveCircles);
+        }
+
+        // moveCircles 함수를 호출하여 애니메이션을 시작합니다.
+        moveCircles();
+
+        // 서로 겹치는 원들의 색상을 혼합하는 함수
+        function mixColors() {
+            for (var i = 0; i < numCircles; i++) {
+                var circle1 = circles[i];
+                for (var j = i + 1; j < numCircles; j++) {
+                    var circle2 = circles[j];
+
+                    var x1 = parseFloat(circle1.getAttribute('cx'));
+                    var y1 = parseFloat(circle1.getAttribute('cy'));
+                    var radius1 = parseFloat(circle1.getAttribute('r'));
+
+                    var x2 = parseFloat(circle2.getAttribute('cx'));
+                    var y2 = parseFloat(circle2.getAttribute('cy'));
+                    var radius2 = parseFloat(circle2.getAttribute('r'));
+
+                    var distance = Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
+
+                    // 원들이 서로 겹치는 경우
+                    if (distance < radius1 + radius2) {
+                        // 겹친 부분의 색상을 혼합하여 새로운 색상을 생성합니다.
+                        var color1 = circle1.getAttribute('fill').match(/\d+/g);
+                        var color2 = circle2.getAttribute('fill').match(/\d+/g);
+
+                        var mixedColor = mixTwoColors(color1, color2);
+
+                        // 새로운 색상을 적용합니다.
+                        circle1.setAttribute('fill', 'rgb(' + mixedColor.join(', ') + ')');
+                        circle2.setAttribute('fill', 'rgb(' + mixedColor.join(', ') + ')');
+
+                        // RGB값을 나타내는 텍스트를 업데이트합니다.
+                        var text1 = svg.querySelectorAll('.rgb-text')[i];
+                        text1.textContent = 'rgb(' + mixedColor.join(', ') + ')';
+                        var text2 = svg.querySelectorAll('.rgb-text')[j];
+                        text2.textContent = 'rgb(' + mixedColor.join(', ') + ')';
+                    }
+                }
+            }
+
+            // 모든 원의 원래 색상으로 돌아가도록 설정합니다.
+            setTimeout(resetColors, 500);
+        }
+
+        // 두 색상을 혼합하는 함수
+        function mixTwoColors(color1, color2) {
+            var r = Math.min(Math.round((parseInt(color1[0]) + parseInt(color2[0]))), 255);
+            var g = Math.min(Math.round((parseInt(color1[1]) + parseInt(color2[1]))), 255);
+            var b = Math.min(Math.round((parseInt(color1[2]) + parseInt(color2[2]))), 255);
+
+            return [r, g, b];
+        }
+
+        // 모든 원의 원래 색상으로 돌아가는 함수
+        function resetColors() {
+            for (var i = 0; i < numCircles; i++) {
+                circles[i].setAttribute('fill', originalColors[i]);
+
+                // RGB값을 나타내는 텍스트를 원래 색상으로 업데이트합니다.
+                var text = svg.querySelectorAll('.rgb-text')[i];
+                text.textContent = originalColors[i];
+            }
+        }
+    </script>
+</body>
+</html>
