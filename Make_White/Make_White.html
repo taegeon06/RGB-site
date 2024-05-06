@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>하얀색 만들기</title>
+<style>
+    #game-container {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        text-align: center;
+        justify-content: center;
+        align-items: center;
+    }
+    #color-info{
+        position: relative;
+        top : 20px;
+        font-size : 2vw;
+    }
+    #svg-container {
+        margin-bottom: 20px;
+    }
+    #buttons-container {
+        display: flex;
+        justify-content: center;
+    }
+    button {
+        margin: 0 10px;
+        padding: 10px 20px;
+        font-size: 16px;
+        background-color: white;
+    }
+    button:hover{
+        background-color: black;
+        color: white;
+    }
+</style>
+</head>
+<body>
+<div id="game-container">
+    <div id="svg-container">
+        <div id="color-info">RGB: (0, 0, 0) 확률: 100%</div>
+        <svg width="600" height="600">
+            <circle id="color-circle" cx="300" cy="300" r="250" fill="rgb(0, 0, 0)" stroke-width="3px" stroke = "rgb(0, 0, 0)"/>
+        </svg>
+        
+    </div>
+    <div id="buttons-container">
+        <button id="increaseXButton">X값 올리기</button>
+        <button id="increaseYButton">Y값 올리기</button>
+        <button id="increaseZButton">Z값 올리기</button>
+    </div>
+</div>
+
+<script>
+    let rgb = { x: 0, y: 0, z: 0 };
+    let probability = 100;
+
+    function updateColorAndProbability() {
+        const colorCircle = document.getElementById('color-circle');
+        const colorInfo = document.getElementById('color-info');
+        const probabilityInfo = document.getElementById('probability-info');
+
+        colorCircle.setAttribute('fill', `rgb(${rgb.x}, ${rgb.y}, ${rgb.z})`);
+        colorInfo.textContent = `RGB(X : ${rgb.x}, Y : ${rgb.y}, Z : ${rgb.z}) 성공확률${probability}%`;
+    }
+
+    function chance(percent) {
+        if (Math.floor(Math.random() * 100) + 1 <= percent)
+            return true;
+        else
+            return false;
+    }
+
+    function handleButtonClick(property) {
+        if (chance(probability)) {
+            if (rgb[property] < 255) {
+                rgb[property] += 17; 
+                probability -= 1
+            }
+        }
+
+        else {
+            location.href = 'Fail.html'
+        }
+        
+        if (rgb.x == 255 && rgb.y == 255 && rgb.z == 255) {
+            location.href = 'Success.html'
+        }
+        
+        
+        updateColorAndProbability(); 
+    }
+
+    document.getElementById('increaseXButton').addEventListener('click', () => handleButtonClick('x'));
+    document.getElementById('increaseYButton').addEventListener('click', () => handleButtonClick('y'));
+    document.getElementById('increaseZButton').addEventListener('click', () => handleButtonClick('z'));
+
+    
+
+    updateColorAndProbability();
+</script>
+</body>
+</html>
